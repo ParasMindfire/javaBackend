@@ -58,5 +58,7 @@ section -2
 *LazyINitialization and when and why also tell global implementation an localn also tell advantages disadvantegs 
 *Bean Scopes(Singleton , prototype,reuest.sssion,application,webscoket) (Spring beans are singleton beams)
 *Bean life cycle
+*post construct, preDestroy
+*config bean and @Bean annotation and reallife example
 
 
