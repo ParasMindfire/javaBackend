@@ -1,0 +1,62 @@
+Section 1
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+what is spring initializer and how it works
+
+what is MAVEN how it works
+
+what is JAR Files
+
+describe pom.xml( Tell about dependency coorifnates also and how to find)
+
+about those mvnw files
+
+work of application properties file
+
+*what is spring initializer and how it works
+
+*what is MAVEN how it works
+
+*what is JAR Files
+
+*describe pom.xml( Tell about dependency coorifnates also and how to find)
+
+*about those mvnw files
+
+*work of application properties file
+
+*static folder in resources
+
+*why to not use src/main/webapp if application is packages as jar
+
+*spring boot starter use and need and what is in the starter , spting boot starter parent
+
+*spring boot dev tools fro aytomatic startign the server
+
+*static folder in resources
+
+*springboot actuator and how do i expose all endpoints
+
+*springboot starter security
+
+*running springboot from commandline
+
+*why do i need to do .\mvnw package and then .\mvnw spring-boot:run
+
+*Injecting custom application properties
+
+*springboot properties(including web properties,avtutaor,security,data,core)
+
+
+section -2 
+------------------------------------------------------------------------------------------------------------------------------------------------------------------
+*inversion of control,depencncy injection (constructor and setter) apring autowiring lso give example of beans qualifiers when used
+*WHat is the work of @SpringBootApplication @Component annotation also tell about autowired annotaton restcontroller get mapping and some other used annotations ? tell about component scanning
+*contructor injection nd setter injection when to use what 
+*FieldInjection(not recommended) harder for unit testing
+*aytowiring in multiple implementations using qualifier and use of @Primary and its priority with qualifier
+*LazyINitialization and when and why also tell global implementation an localn also tell advantages disadvantegs 
+*Bean Scopes(Singleton , prototype,reuest.sssion,application,webscoket) (Spring beans are singleton beams)
+*Bean life cycle
+
+
