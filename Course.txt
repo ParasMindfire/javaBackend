@@ -59,6 +59,29 @@ section -2
 *Bean Scopes(Singleton , prototype,reuest.sssion,application,webscoket) (Spring beans are singleton beams)
 *Bean life cycle
 *post construct, preDestroy
-*config bean and @Bean annotation and reallife example
+*config bean and @Bean annotation and reallife example tell how we can use amazon s3 client which was not originally annotated with @component 
+
+
+section-3
+------------------------------------------------------------------------------------------------------------------------------------------------------------------
+*what is hibernate and JPA , jpa vendor implementations , benifits of jpa and also tell about vendor lock in how jpa overcomes it , also tell about JDBC
+*In spring boot hibernate is the default implementation of jpa 
+*what is entity manager 
+*Lambda expression with bean 
+*ID generation strategies
+*DAO
+*EntityManager vs JpaRepository
+*Discover transactional annotation and Respository annotation
+*Cretaing and retriving updating querying and deleting object in hibernate
+*JPQL syntazes are based on entity name and entity field
+*Creatign table using java cpde
+
+
+section-4
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------
+*REST API or restful and rest over http
+*CRM
+*JSON
+
 
 
