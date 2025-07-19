@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="en" xmlns="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Confirmtion</title>
+</head>
+<body>
+    <h1>Student Confirmation</h1>
+    <!-- the object name should be same as the attibute name given to model -->
+    The Student is confirmed : <span th:text="${student.firstName} + ' ' + ${student.lastName}"/>
+    <br>
+    Belongs to <span th:text="${student.country}"/>
+    <br>
+    Having Favourite language , <span th:text="${student.favoriteLanguage}"/>
+    <br>
+    with favorite system <span th:text="${student.favoriteSystem}" />
+</body>
+</html>

@@ -82,6 +82,49 @@ section-4
 *REST API or restful and rest over http
 *CRM
 *JSON
+*Difference between http and rest and http responses
+*MIME
+*@RestController,@RequestMapping
+*JSON DATA bindin with Jackson
+*Spring rest with path vairables
+*Excpetin handling and global exception handling @ControlAdvice(Real Time use of AOP)
+*Global Exception handling and @ControllerAdvice hw is i real time AOP
+*Purpose of service layer
+*Remove all the @Transactional from DAO and move it to service 
+*Put pathc get delete in java
+*Spring Data JPA(JPArepositry)
+*Spring Data Rest and its advance features and HATEOAS and swagger
+
+
+section-5
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------
+*Scurity
+*WHat is this InMemoryUserDetailsManager . 
+*Authorisation with hasRole , CSRF and when and when not to use
+*JDBC Authentication and also tell its build in thing that how it scans automatically table and finds out the role
+*Spring security for custom tables and what abiut this query 
+ jdbcUserDetailsManager.setAuthoritiesByUsernameQuery("select user_id,roles from roles where user_id=?");
+*Use andimportance of logging.level.org.soringframework.security=DEBUG
+
+
+
+section-6
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------
+*What is thymeleaf and how does it access spring mvc model
+*Thymeleaf with basic html and css
+*Components of spring mvc application
+* TEll about controller	and view template
+*Adding data to spring mvc model
+*@RequestParam annotation
+*Difference between get and post how is data sent in get also tell . in get i am getting http://localhost:8080/processFormVersionThree?studentName=hmm like this
+*If i send postmapping when getting the it will throw 405 error
+*Spring MVC Form Data binding
+*Taking multiple inputs like first name last name from a from 
+*Thymeleaf and select tag
+*Bean Validation and initBinder
+
+
+
 
 
 
