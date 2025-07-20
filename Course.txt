@@ -130,6 +130,8 @@ section-7
 ---------------------------------------------------------------------------------------------------------------------------------------------------------------------
 Spring MVC Crud
 how to redirect to specific url from index,html in static folder
+findAllByOrderByLastNameAsc tell me abou this like how it default sorts also redirect:/employees/list about this redirection
+when form is loaded it calls the getter method first for whihc we need to handle update by adding type hidden with field id
 
 
 
