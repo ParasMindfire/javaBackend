@@ -122,6 +122,14 @@ section-6
 *Taking multiple inputs like first name last name from a from 
 *Thymeleaf and select tag
 *Bean Validation and initBinder
+*Validation with @Min @Max , add validation using regex
+*Custom error message and Custom validation
+
+
+section-7
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Spring MVC Crud
+how to redirect to specific url from index,html in static folder
 
 
 
