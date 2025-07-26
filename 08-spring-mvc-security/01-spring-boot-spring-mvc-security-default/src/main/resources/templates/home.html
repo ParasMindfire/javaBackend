@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <h2>Welcome to my Home page</h2>
+    <div sec:authorize="isAuthenticated()">
+    Logged in as: <strong><span sec:authentication="name"></span></strong><br />
+    Roles: <span sec:authentication="principal.authorities"></span>
+    </div>
+
+    <div sec:authorize="hasRole('MANAGER')">
+        <p>
+            <a th:href="@{/leaders}">Leadership Meeting</a>
+            (Only For Mettings)
+        </p>
+    </div>
+
+
+    <div sec:authorize="hasRole('ADMIN')">
+        <p>
+            <a th:href="@{/systems}">IT System Meeting</a>
+            (Only For Admins)
+        </p>
+    </div>
+
+    <form action="#" th:action="@{/logout}" method="POST">
+        <input type="submit" value="Logout"/>
+    </form>
+</body>
+</html>

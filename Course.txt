@@ -1,50 +1,28 @@
 Section 1
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-what is spring initializer and how it works
-
-what is MAVEN how it works
-
-what is JAR Files
-
-describe pom.xml( Tell about dependency coorifnates also and how to find)
-
-about those mvnw files
-
-work of application properties file
-
 *what is spring initializer and how it works
-
 *what is MAVEN how it works
-
 *what is JAR Files
-
 *describe pom.xml( Tell about dependency coorifnates also and how to find)
-
 *about those mvnw files
-
 *work of application properties file
-
+*what is spring initializer and how it works
+*what is MAVEN how it works
+*what is JAR Files
+*describe pom.xml( Tell about dependency coorifnates also and how to find)
+*about those mvnw files
+*work of application properties file
 *static folder in resources
-
 *why to not use src/main/webapp if application is packages as jar
-
 *spring boot starter use and need and what is in the starter , spting boot starter parent
-
 *spring boot dev tools fro aytomatic startign the server
-
 *static folder in resources
-
 *springboot actuator and how do i expose all endpoints
-
 *springboot starter security
-
 *running springboot from commandline
-
 *why do i need to do .\mvnw package and then .\mvnw spring-boot:run
-
 *Injecting custom application properties
-
 *springboot properties(including web properties,avtutaor,security,data,core)
 
 
@@ -134,7 +112,53 @@ findAllByOrderByLastNameAsc tell me abou this like how it default sorts also red
 when form is loaded it calls the getter method first for whihc we need to handle update by adding type hidden with field id
 
 
+section-8
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------
+*Spring security with servlet filters
+*custom login form	
+*what is really context path and contxt root
+*xmlns:sec="http://www.thymeleaf.org/extras/spring-security">      Logged in as: <strong><span sec:authentication="name"></span></strong><br />
+    Roles: <span sec:authentication="principal.authorities"></span>
+how from this automatic authorisation happens in java
+*<div sec:authorize="hasRole('ADMIN')">
+*JDBC Authentication
+*JDBCTableConnection and also with cutom table
 
+
+
+section-9
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------
+*Advanced mappings like one to one one to many and all
+*fetch types eager and lazy
+*one to one uiderectional
+*Entity Life Cycle
+*Detail about the states of entity new/transient persistent/managed removed detached
+*Cascade types
+*Entity one to one Bidirectional
+*Properly see how the tables are linking with each other like mapped y and hoinComun
+*Fetch Types eae and lazy
+*Usesof JOIN Fetch
+*JoinTable leanrbout inverseJoinColumn too
+*theCourse.addStudent(this); why add this again ??
+*Deleting Student? Remove it from each Course.students (the owning side); then delete the Student.
+ Deleting Course? Just delete it; JPA handles join table cleanup.
+
+why this happens lik leanr about owning side 
+
+
+section-10
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------
+*What is delegation?
+*AOP Defination
+*Cross Cutting concerns
+*AOP Terminology
+*advice types(before,after returning,after throwing,after finally,arounf advice)
+*Weaving
+*AOP frameworks(AspectJ,Spring AOP) see advantages and disadvantes
+*Spring aop support
+*@Aspect and point cut expression different types are there we are strting with execution piutcut
+*Parameter pattern wildcard
+*Point cut declarations
 
 
 

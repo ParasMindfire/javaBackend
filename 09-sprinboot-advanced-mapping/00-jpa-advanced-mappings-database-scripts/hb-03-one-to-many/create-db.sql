@@ -1,4 +1,3 @@
-select * from `hb-01-one-to-one-uni`.instructor_detail; 
 DROP SCHEMA IF EXISTS `hb-03-one-to-many`;
 
 CREATE SCHEMA `hb-03-one-to-many`;
