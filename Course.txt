@@ -159,6 +159,14 @@ section-10
 *@Aspect and point cut expression different types are there we are strting with execution piutcut
 *Parameter pattern wildcard
 *Point cut declarations
+*Joint Point
+*@AfterThrowing and AfterRunning
+and also learn where these aspects are useful
+*After Advice
+*@Around
+*Differenc between JoinPOint and proceeding join point
+*AroundAdvice or handling the exception and rethrowing it 
+
 
 
 
