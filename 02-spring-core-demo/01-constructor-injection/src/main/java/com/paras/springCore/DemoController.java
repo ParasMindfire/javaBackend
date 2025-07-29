@@ -12,7 +12,7 @@ public class DemoController {
     public DemoController(Coach theCoach){
         myCoach=theCoach;
     }
-
+    
     @GetMapping("/dialyworkout")
     public String getDailyWorkout(){
         return myCoach.getDailyWorkout();
