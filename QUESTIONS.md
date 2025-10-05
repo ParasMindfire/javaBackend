@@ -918,3 +918,715 @@ So, yes, the request is JSON, but your **existing Employee object is Java**, and
 
 ---
 
+
+## 10)Explain the use DemoSecurityConfig and in memory storage in 05-springboot-rest-security 
+---
+
+### 🧩 1️⃣ When you used `InMemoryUserDetailsManager`
+
+```java
+@Bean
+public InMemoryUserDetailsManager userDetailsManager(){
+    UserDetails paras = User.builder()
+        .username("paras")
+        .password("{noop}test123")
+        .roles("EMPLOYEE","MANAGER","ADMIN")
+        .build();
+
+    return new InMemoryUserDetailsManager(paras);
+}
+```
+
+👉 Here, everything (users and roles) is **stored in memory** — no database involved.
+You directly define which users exist and which roles they have.
+
+When you did this:
+
+* Spring automatically knew: “paras has roles EMPLOYEE, MANAGER, ADMIN”
+* So in your `SecurityFilterChain`, when you wrote:
+
+  ```java
+  .requestMatchers(HttpMethod.GET, "/api/employees").hasRole("EMPLOYEE")
+  ```
+
+  it worked fine because Spring could read the roles from memory.
+
+---
+
+### 🧩 2️⃣ What happens when you switch to `JdbcUserDetailsManager`
+
+Now, instead of storing users in memory, Spring fetches user data from a **database**.
+
+```java
+@Bean
+public UserDetailsManager userDetailsManager(DataSource dataSource){
+    JdbcUserDetailsManager jdbcUserDetailsManager = new JdbcUserDetailsManager(dataSource);
+
+    jdbcUserDetailsManager.setUsersByUsernameQuery(
+        "select user_id, pw, active from members where user_id=?");
+
+    jdbcUserDetailsManager.setAuthoritiesByUsernameQuery(
+        "select user_id, role from roles where user_id=?");
+
+    return jdbcUserDetailsManager;
+}
+```
+
+Here’s the **flow** 👇
+
+### ➤ Step 1: User logs in with username & password
+
+Spring Security calls `JdbcUserDetailsManager.loadUserByUsername(username)`
+
+### ➤ Step 2: It runs your SQL queries:
+
+* First query:
+
+  ```sql
+  select user_id, pw, active from members where user_id=?
+  ```
+
+  → gets username, password, and whether the account is active.
+
+* Second query:
+
+  ```sql
+  select user_id, role from roles where user_id=?
+  ```
+
+  → gets all the roles (authorities) that belong to this user.
+
+### ➤ Step 3: Spring builds a `UserDetails` object
+
+It now knows:
+
+* username
+* password
+* active status
+* roles (like ROLE_EMPLOYEE, ROLE_MANAGER, etc.)
+
+---
+
+### 🧩 3️⃣ Why your filter chain uses `.hasRole()` even if `Employee` table has no `role` field
+
+Excellent observation 💡
+Your `Employee` table (`employee_directory.employee`) is your **business data** — not for authentication.
+
+The **roles** are not supposed to be inside your `employee` table.
+They are typically stored separately in **authentication tables**, like:
+
+```sql
+CREATE TABLE members (
+  user_id VARCHAR(50) NOT NULL PRIMARY KEY,
+  pw VARCHAR(68) NOT NULL,
+  active BOOLEAN NOT NULL
+);
+
+CREATE TABLE roles (
+  user_id VARCHAR(50) NOT NULL,
+  role VARCHAR(50) NOT NULL,
+  FOREIGN KEY (user_id) REFERENCES members(user_id)
+);
+```
+
+So:
+
+* `members` = stores login credentials
+* `roles` = stores role mappings (like EMPLOYEE, ADMIN, etc.)
+* `employee` = stores actual company data (unrelated to login security)
+
+---
+
+### 🧩 4️⃣ What happens in the Filter Chain
+
+When a request comes:
+
+1. Spring Security checks the HTTP request.
+2. The user’s username is extracted from the authentication token (HTTP Basic or JWT, etc.)
+3. It checks in memory / DB what roles the user has.
+4. Then, it compares with your filter rules:
+
+   ```java
+   .requestMatchers(HttpMethod.GET, "/api/employees").hasRole("EMPLOYEE")
+   ```
+
+   If user has `ROLE_EMPLOYEE` → ✅ allowed.
+   If not → ❌ 403 Forbidden.
+
+---
+
+### 🧩 5️⃣ Why you need the role tables
+
+Since you’re using database authentication now, you **must have** those two tables:
+
+* `members` (for login info)
+* `roles` (for authorization info)
+
+Otherwise, Spring won’t be able to know what roles your user has — and all your `hasRole()` checks will fail.
+
+---
+
+### 🧩 6️⃣ TL;DR — the difference between both approaches
+
+| Approach                     | Where users are stored | Where roles come from     | Good for     | Example                  |
+| ---------------------------- | ---------------------- | ------------------------- | ------------ | ------------------------ |
+| `InMemoryUserDetailsManager` | Hardcoded in Java code | Hardcoded roles in code   | Simple demos | Small POCs               |
+| `JdbcUserDetailsManager`     | Database tables        | Database tables (`roles`) | Real apps    | Enterprise login systems |
+
+---
+
+
+## 11)Tell me abou the application properties of 05-springboot-rest-security
+
+---
+
+### ⚙️ 1️⃣ Database Configuration — for JDBC / JPA
+
+These first three lines tell Spring **how to connect to your MySQL database**:
+
+```properties
+spring.datasource.url=jdbc:mysql://localhost:3306/employee_directory
+spring.datasource.username=springstudent
+spring.datasource.password=springstudent
+```
+
+### 👉 What happens here:
+
+* **`spring.datasource.url`**
+  → The **JDBC connection URL** to your database.
+  `jdbc:mysql://localhost:3306/employee_directory` means:
+
+  * Use MySQL driver (`jdbc:mysql`)
+  * Connect to the database running on your **local system** (`localhost`)
+  * Use the port **3306** (default MySQL port)
+  * Access the database **employee_directory**
+
+* **`spring.datasource.username`**
+  → The **username** used to log in to your MySQL database.
+  Here it’s `springstudent`.
+
+* **`spring.datasource.password`**
+  → The **password** for that user.
+  Here it’s also `springstudent`.
+
+✅ These three properties allow:
+
+* JPA / Hibernate (for your `Employee` entity)
+* and your `JdbcUserDetailsManager`
+  to connect to the **same database**.
+
+---
+
+### 🔐 2️⃣ Spring Security Default Login Configuration
+
+These two lines are **completely separate** — they configure **default in-memory users** for Spring Security.
+
+```properties
+spring.security.user.name=paras
+spring.security.user.password=Paras@123
+```
+
+### 👉 What happens here:
+
+If you **don’t define your own UserDetailsService** (like `InMemoryUserDetailsManager` or `JdbcUserDetailsManager`),
+Spring Boot **automatically creates a default user** using these properties.
+
+That means:
+
+* Username = `paras`
+* Password = `Paras@123`
+* Role = `USER` (by default)
+
+So when you start the app and access a secured endpoint, Spring will ask for login.
+You can enter these credentials to log in successfully.
+
+---
+
+### 🧩 3️⃣ Which One Takes Effect in Your Code
+
+Right now, in your setup 👇
+
+```java
+@Bean
+public UserDetailsManager userDetailsManager(DataSource dataSource){
+    JdbcUserDetailsManager jdbcUserDetailsManager = new JdbcUserDetailsManager(dataSource);
+    ...
+    return jdbcUserDetailsManager;
+}
+```
+
+You have **explicitly defined** your own `UserDetailsService` (`JdbcUserDetailsManager`).
+
+➡️ Because of this,
+the default Spring Boot user (`spring.security.user.name` and `spring.security.user.password`) is **ignored**.
+
+Spring only uses those two properties **if** you don’t define your own login setup.
+
+---
+
+### ✅ TL;DR Summary
+
+| Property                        | Purpose                          | Used by                             | Active in your project?          |
+| ------------------------------- | -------------------------------- | ----------------------------------- | -------------------------------- |
+| `spring.datasource.url`         | Database connection URL          | JDBC / JPA / JdbcUserDetailsManager | ✅ Yes                            |
+| `spring.datasource.username`    | DB username                      | JDBC / JPA / JdbcUserDetailsManager | ✅ Yes                            |
+| `spring.datasource.password`    | DB password                      | JDBC / JPA / JdbcUserDetailsManager | ✅ Yes                            |
+| `spring.security.user.name`     | Default in-memory login username | Spring Security (auto config)       | ❌ Ignored (because you use JDBC) |
+| `spring.security.user.password` | Default in-memory login password | Spring Security (auto config)       | ❌ Ignored (because you use JDBC) |
+
+---
+
+
+
+## 12) In 06-springboot-spring-mvc > 01-thymeleafDemo-helloWorld
+
+1. When I hit `/showForm`, it shows `helloworld-form`.
+   → But what happens next — does it show something in `helloworld`?
+
+2. In `helloworld-form.html`, what is `theData`?
+
+3. When I hit submit, the form goes to `processFormVersionThree`.
+   → From where does `@RequestParam("studentName")` get its value?
+
+4. Does the value come from the form’s `name="studentName"` attribute?
+
+5. Is it assigned to the variable `theName` automatically?
+
+6. What exactly is `Model` in the method parameters, and how does it work?
+
+---
+
+### 🧭 1. Flow Overview
+
+You have three main files working together:
+
+| Layer      | File                        | Purpose                                                  |
+| ---------- | --------------------------- | -------------------------------------------------------- |
+| Controller | `HelloWorldController.java` | Handles requests, processes data, passes results to view |
+| View 1     | `helloworld-form.html`      | Input form for user                                      |
+| View 2     | `helloworld.html`           | Displays output message                                  |
+
+---
+
+### 🧩 Step-by-step flow
+
+### 🧱 Step 1: When you hit `/showForm`
+
+```java
+@RequestMapping("/showForm")
+public String showForm(){
+    return "helloworld-form";
+}
+```
+
+✅ This method returns `"helloworld-form"`, so Spring looks for a file named
+`helloworld-form.html` in your **templates** folder.
+That’s the HTML form that will be shown.
+
+---
+
+### 🧠 Step 2: Inside `helloworld-form.html`
+
+```html
+<form th:action="@{/processFormVersionThree}" method="POST">
+    <input type="text" name="studentName" placeholder="Whats Your name ?">
+    <input type="submit">
+</form>
+```
+
+➡️ When you press **Submit**, the browser sends an HTTP POST request to
+`/processFormVersionThree`.
+
+➡️ It sends the form data as key-value pairs:
+
+```
+studentName = whatever_you_typed
+```
+
+---
+
+### 🧩 Step 3: How the controller gets that data
+
+In your controller:
+
+```java
+@PostMapping("/processFormVersionThree")
+public String processFormVersionThree(@RequestParam("studentName") String theName, Model model)
+```
+
+Here’s what happens:
+
+1. `@RequestParam("studentName")` looks for a form field or URL parameter named `studentName`.
+
+   * ✅ It matches the `<input name="studentName">` in your form.
+   * So the text you typed in the form will be extracted and assigned to the Java variable `theName`.
+
+   Example:
+
+   ```
+   You typed "Paras" → theName = "Paras"
+   ```
+
+2. You then modify it:
+
+   ```java
+   theName = theName.toUpperCase();
+   String result = "Yo ! " + theName;
+   ```
+
+3. Then you add it to the model:
+
+   ```java
+   model.addAttribute("message", result);
+   ```
+
+---
+
+### 🎨 Step 4: What is `Model`?
+
+`Model` is an interface provided by Spring to **transfer data** from your **controller** → **view (HTML)**.
+
+You can think of it like a small data bag or map.
+
+When you write:
+
+```java
+model.addAttribute("message", result);
+```
+
+✅ It puts `message` into that bag.
+✅ Thymeleaf can then access it using `${message}`.
+
+So when your method returns:
+
+```java
+return "helloworld";
+```
+
+→ Spring renders `helloworld.html`
+→ Thymeleaf replaces `${message}` with your dynamic data.
+
+---
+
+### 🖥 Step 5: In `helloworld.html`
+
+```html
+Student Name : <span th:text="${param.studentName}" /><br>
+The Message : <span th:text="${message}"/>
+```
+
+* `${param.studentName}` → refers to the **request parameter** directly (from the form or URL).
+
+  * So if you submitted `studentName=Paras`, it prints **Paras**.
+
+* `${message}` → refers to the **model attribute** you set in the controller.
+
+  * It prints **Yo ! PARAS**.
+
+---
+
+### 🔹 Step 6: What about `theData`?
+
+In your `helloworld-form.html`, you wrote:
+
+```html
+<p th:text="'time on the server is ' + ${theData}" class="funny"/>
+```
+
+➡️ `${theData}` would come from the controller **if you had added it** like this:
+
+```java
+model.addAttribute("theData", new Date());
+```
+
+But in your current code, you never set it.
+So, `theData` will be **null** and nothing will display.
+
+---
+
+### ✅ Summary
+
+| Concept                                          | Meaning                                                                |
+| ------------------------------------------------ | ---------------------------------------------------------------------- |
+| `@RequestMapping("/showForm")`                   | Opens the form view                                                    |
+| `<form th:action="@{/processFormVersionThree}">` | Submits to controller endpoint                                         |
+| `@RequestParam("studentName")`                   | Binds form field `name="studentName"` to Java variable                 |
+| `Model`                                          | Used to pass data from controller → HTML view                          |
+| `${message}`                                     | Accesses model attribute in Thymeleaf                                  |
+| `${param.studentName}`                           | Accesses form parameter directly                                       |
+| `${theData}`                                     | Not used yet; needs `model.addAttribute("theData", ...)` in controller |
+
+---
+
+
+## 13) In 06-springboot-spring-mvc > 02-validationDemo tell the overall flow
+
+### High-level overview
+
+* **GET /** → `CustomerController.showForm()` — returns `customer-form.html` with a new `Customer` backing object.
+* User fills the form and **POSTs** to `/processForm`.
+* Spring **binds** the request params to a `Customer` object (uses `WebDataBinder`).
+* `@InitBinder` runs and registers `StringTrimmerEditor`.
+* After binding, **validation** runs because the controller method has `@Valid`.
+* Any binding or validation errors are captured in `BindingResult`.
+* Controller checks `BindingResult.hasErrors()` and either re-renders the form (with error messages) or proceeds to `customer-confirmation.html`.
+
+---
+
+### Detailed timeline (what happens internally)
+
+#### 1) Browser GET request — show form
+
+* Request: `GET /`
+* Controller:
+
+  ```java
+  @GetMapping("/")
+  public String showForm(Model theModel){
+      theModel.addAttribute("customer", new Customer());
+      return "customer-form";
+  }
+  ```
+* Effect:
+
+  * Adds an empty `Customer` object to the model under the name `"customer"`.
+  * Thymeleaf template `customer-form.html` is rendered.
+  * Because the template uses `th:object="${customer}"` + `th:field="*{...}"`, Thymeleaf:
+
+    * Generates input `name` attributes that match `Customer` property names (e.g. `name="lastName"`).
+    * Pre-populates fields from the `Customer` instance (empty now).
+
+---
+
+#### 2) Form HTML (what matters for binding)
+
+Your form:
+
+```html
+<form th:action="@{/processForm}" th:object="${customer}" method="POST">
+    First Name: <input type="text" th:field="*{firstName}" />
+    Last Name (*): <input type="text" th:field="*{lastName}" />
+    Free Passes (*): <input type="text" th:field="*{freePasses}" />
+    Postal Code (*): <input type="text" th:field="*{postalCode}" />
+    Course Code (*): <input type="text" th:field="*{courseCode}" />
+    <input type="submit" value="Submit" />
+</form>
+```
+
+* `th:field="*{freePasses}"` ⇒ input `name="freePasses"`. On submit the browser sends `freePasses=<string>`.
+* `th:object="${customer}"` tells Thymeleaf the form is bound to `Customer`.
+
+---
+
+### 3) POST request arrives — request processing order
+
+When user submits:
+
+1. **DispatcherServlet** receives POST `/processForm`.
+
+2. Spring finds the handler method `processForm(...)`.
+
+3. **Before binding**, Spring calls any `@InitBinder` methods for that controller.
+
+   Your `@InitBinder`:
+
+   ```java
+   @InitBinder
+   public void initBinder(WebDataBinder dataBinder){
+       StringTrimmerEditor stringTrimmerEditor = new StringTrimmerEditor(true);
+       dataBinder.registerCustomEditor(String.class, stringTrimmerEditor);
+   }
+   ```
+
+   * This registers a **String editor** that trims leading/trailing whitespace.
+   * The `true` flag means: if, after trimming, the String is empty (`""`), convert it to `null`.
+
+4. Spring creates a target `Customer` object and starts **data binding**:
+
+   * Binds each request parameter to the corresponding `Customer` property.
+   * Uses registered editors/converters:
+
+     * `StringTrimmerEditor` is applied to **String** fields (e.g. `firstName`, `lastName`, `postalCode`, `courseCode`) — blanks become `null`.
+     * For `freePasses` (an `Integer`), Spring tries to convert the incoming String to an `Integer`.
+
+       * If the user left it blank: since `freePasses` is *not a String field*, the `StringTrimmerEditor` **won’t** run for it. Spring will attempt String→Integer conversion and likely create a **type mismatch** error if empty (unless a Number editor allowing empty is registered).
+
+5. **Validation** phase (because controller parameter has `@Valid`):
+
+   * Spring invokes the configured JSR-380 (jakarta.validation) validator.
+   * All constraint annotations on `Customer` fields are evaluated.
+   * Constraint violations are turned into errors added to `BindingResult`.
+
+6. Controller method is invoked with arguments:
+
+   ```java
+   public String processForm(@Valid @ModelAttribute("customer") Customer theCustomer,
+                             BindingResult theBindingResult) { ... }
+   ```
+
+   * **Important**: `BindingResult` **must** immediately follow the validated model attribute parameter. Otherwise Spring will throw an exception.
+
+---
+
+### Validation and binding details per field
+
+Customer class snapshot with constraints:
+
+```java
+private String firstName;
+
+@NotNull(message="is required")
+@Size(min=1, message="is required")
+private String lastName;
+
+@NotNull(message="is required")
+@Min(value = 0, message = "must be ≥ 0")
+@Max(value = 10, message = "must be ≤ 10")
+private Integer freePasses;
+
+@Pattern(regexp = "^[a-zA-Z0-9]{5}$", message = "must be exactly 5 letters/digits")
+private String postalCode;
+
+@CourceCode(value="PARAS", message="Must Start with Paras")
+private String courseCode;
+```
+
+* `lastName`:
+
+  * You used both `@NotNull` and `@Size(min=1)`.
+  * Because `StringTrimmerEditor(true)` converts blank strings to `null`, `@NotNull` will detect blanks.
+  * Note: `@Size` by itself does **not** run on `null` values — that's why `@NotNull` is also present.
+
+* `freePasses` (Integer):
+
+  * If user enters a non-integer (or leaves blank), **binding** will produce a type-mismatch error before annotation validation (BindingResult will contain that field error).
+  * `@NotNull`, `@Min`, `@Max` are validation constraints — they check the Integer after successful conversion.
+  * If you want blank numeric inputs to become `null` without a type error, register a `CustomNumberEditor(Integer.class, true)` in `@InitBinder` (the `true` allows empty → null). Right now, blank numeric inputs are likely to cause conversion errors.
+
+* `postalCode`:
+
+  * `@Pattern` enforces exactly 5 alphanumeric chars. If null, `@Pattern` generally ignores `null` (so use `@NotNull` if you want it required).
+
+* `courseCode`:
+
+  * Custom annotation `@CourceCode(value="PARAS", message="Must Start with Paras")`.
+  * The validator class (referenced in the annotation) should implement `ConstraintValidator<CourceCode, String>` and check `value == null ? true : value.startsWith(prefix)`. (Returning `true` for `null` lets `@NotNull` handle emptiness if needed.)
+
+---
+
+### What happens in the controller method
+
+```java
+@PostMapping("/processForm")
+public String processForm(@Valid @ModelAttribute("customer") Customer theCustomer,
+                          BindingResult theBindingResult) {
+
+    if (theBindingResult.hasErrors()) {
+        System.out.println("binding " + theBindingResult);
+        return "customer-form";
+    }
+    return "customer-confirmation";
+}
+```
+
+* If `hasErrors()` is `true`, the method returns the original form view (`customer-form`) — **and** the model includes:
+
+  * The `customer` object (with the user-entered values that successfully bound).
+  * The `BindingResult` containing field errors.
+* Thymeleaf can read the `BindingResult` to render error messages inline.
+
+---
+
+### How Thymeleaf shows errors
+
+In your form you used this pattern:
+
+```html
+<span th:if="${#fields.hasErrors('lastName')}" th:errors="*{lastName}" class="error"></span>
+```
+
+* `#fields.hasErrors('lastName')` checks if the `BindingResult` has errors for that field.
+* `th:errors="*{lastName}"` renders the validation message(s) from the `BindingResult`.
+* Messages come from:
+
+  * the `message` property in the constraint annotation (e.g., `message="is required"`), or
+  * from message bundles (`messages.properties`) when you use message keys.
+
+---
+
+### Custom validator (`@CourceCode`) — how it typically works
+
+(You didn’t show the validator implementation; typical structure:)
+
+```java
+public class CourseCodeConstraintValidator implements ConstraintValidator<CourceCode, String> {
+
+    private String prefix;
+
+    @Override
+    public void initialize(CourceCode constraintAnnotation) {
+        this.prefix = constraintAnnotation.value();
+    }
+
+    @Override
+    public boolean isValid(String code, ConstraintValidatorContext context) {
+        // return true for null so @NotNull can handle requiredness separately
+        if (code == null) {
+            return true;
+        }
+        return code.startsWith(prefix);
+    }
+}
+```
+
+* The validator reads the annotation’s `value` (prefix) in `initialize`.
+* `isValid` returns `true` for `null` so you can compose `@NotNull + @CourceCode` if you need both presence and format checks.
+
+---
+
+### Gotchas & recommendations (practical)
+
+* **`StringTrimmerEditor` only applies to `String` fields.** For numeric fields like `Integer freePasses`, if the user submits blank, Spring will attempt to convert `""` to `Integer` and produce a type mismatch. If you want to accept empty numeric fields and convert them to `null`, register a `CustomNumberEditor` or `NumberFormat` with `allowEmpty=true` in `@InitBinder`.
+* **Order of parameters:** `BindingResult` must immediately follow the `@Valid @ModelAttribute(...)` parameter.
+* **`@Size` on its own does not fire on `null`.** Use `@NotNull` (or `@NotBlank` for Strings) when you want to require the field.
+* **Naming consistency:** your custom annotation is `CourceCode` (typo). Consider renaming to `CourseCode` for clarity; ensure the validator class name in `@Constraint(validatedBy=...)` matches the real class.
+* **Custom messages:** put them in `messages.properties` or use the `message` attribute on annotations. Example key in `messages.properties`:
+  `CourceCode.message=Must start with PARAS` (if you use message keys instead of literal messages).
+
+---
+
+### Example error scenarios (what the user sees)
+
+1. User leaves **lastName** blank:
+
+   * `StringTrimmerEditor` converts `""` → `null`.
+   * `@NotNull` triggers: message `"is required"`.
+   * Form returns, and `<span th:errors="*{lastName}">` shows `is required`.
+
+2. User enters `freePasses = 15`:
+
+   * `@Max(10)` triggers: message `"must be ≤ 10"`.
+
+3. User enters `postalCode = "abc"`:
+
+   * `@Pattern` triggers: message `"must be exactly 5 letters/digits"`.
+
+4. User enters `courseCode = "XYZ"` while annotation expects prefix `"PARAS"`:
+
+   * Custom validator triggers and produces `"Must Start with Paras"`.
+
+---
+
+### TL;DR (short summary)
+
+* `@InitBinder` registers editors (your `StringTrimmerEditor`) that run **before** data binding.
+* `th:object` + `th:field` in Thymeleaf map form fields to `Customer` properties.
+* `@Valid` triggers JSR-380 validation after binding; validation errors + binding errors go into `BindingResult`.
+* `BindingResult` must be directly after the `@ModelAttribute` param and is used by Thymeleaf to display errors.
+* Blank strings for String fields become `null` because of `StringTrimmerEditor(true)`, which helps `@NotNull` to catch blanks reliably.
+* For numeric fields, consider adding a number editor if you want empty → null behavior.
+
+---
+
+
+
